@@ -530,6 +530,7 @@
       <button class="exp-btn" onclick="exportAllCSV()" style="flex:0;white-space:nowrap;">Exportar tudo .csv</button>
       <button class="exp-btn" onclick="exportAllJSON()" style="flex:0;white-space:nowrap;">Exportar tudo .json</button>
       <button class="exp-btn" onclick="exportAAEAll()" style="flex:0;white-space:nowrap;border-color:var(--p2bd);color:#2a5a7a;">Planilha AAE (tudo) .csv</button>
+      <button class="exp-btn" onclick="exportMethodsLog()" style="flex:0;white-space:nowrap;">Log de métodos .json</button>
     </div>
     <div id="hist-list"><div class="history-empty">As análises feitas nesta sessão aparecem aqui.</div></div>
   </div>
@@ -574,6 +575,14 @@
           <input type="number" id="calib-speakers" value="1" min="1" max="9" step="1" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:monospace;">
         </div>
       </div>
+      <div style="margin-bottom:.6rem;">
+        <label class="lbl">AAE presente (gabarito — opcional, p/ avaliar precisão/recall)</label>
+        <select id="calib-aae" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:monospace;">
+          <option value="">— não codificado —</option>
+          <option value="sim">Sim (AAE presente)</option>
+          <option value="nao">Não (AAE ausente)</option>
+        </select>
+      </div>
       <button id="calib-add-btn" onclick="calibAddClip()" disabled style="background:var(--accent);color:#f0e8d8;border:none;border-radius:7px;padding:.45rem 1.1rem;font-family:Georgia,serif;font-size:.85rem;cursor:pointer;opacity:1;">+ adicionar ao conjunto</button>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
@@ -585,11 +594,40 @@
     </div>
     <div id="calib-list"></div>
     <div id="calib-summary"></div>
+    <div id="calib-reliability"></div>
     <div id="calib-bands"></div>
   </div>
 </div>
 
 <div class="tab-panel" id="tab-docs">
+  <div class="card">
+    <h2>Como citar</h2>
+    <div class="docs-section" style="margin-top:.75rem;">
+      <p style="font-size:.9rem;color:var(--muted);">Preencha os campos para gerar a referência no padrão <strong>ABNT (NBR 6023)</strong>. A "data de acesso" usa a data atual automaticamente.</p>
+      <div class="two-col" style="margin:.6rem 0;">
+        <div><label class="lbl">autor (SOBRENOME, Nome)</label><input type="text" id="cite-autor" oninput="updateCitation()" placeholder="ex.: SILVA, Maria" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;"></div>
+        <div><label class="lbl">ano</label><input type="text" id="cite-ano" oninput="updateCitation()" placeholder="2026" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:monospace;"></div>
+      </div>
+      <div class="two-col" style="margin:.6rem 0;">
+        <div><label class="lbl">versão</label><input type="text" id="cite-versao" oninput="updateCitation()" placeholder="1.0" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:monospace;"></div>
+        <div><label class="lbl">URL de acesso</label><input type="text" id="cite-url" oninput="updateCitation()" placeholder="https://...github.io/dialectica/" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:monospace;"></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;">
+        <div id="cite-output" style="flex:1;min-width:240px;padding:.75rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:.9rem;line-height:1.6;"></div>
+        <button id="cite-copy-btn" onclick="copyCitation()" style="background:var(--accent);color:#f0e8d8;border:none;border-radius:7px;padding:.45rem 1rem;font-family:Georgia,serif;font-size:.85rem;cursor:pointer;">copiar</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Ficha técnica do instrumento (model card)</h2>
+    <div class="docs-section" style="margin-top:.75rem;">
+      <p><strong>Uso pretendido:</strong> apoio à codificação sociolinguística de materiais de áudio (detecção de variedades do inglês, segmentação prosódica, codificação de AAE como variedade) em pesquisa acadêmica, como <em>primeira codificação automática a ser verificada por um humano</em>.</p>
+      <p><strong>Uso fora de escopo:</strong> não é um identificador de raça, etnia, sexo ou identidade de qualquer falante; codifica a VARIEDADE LINGUÍSTICA e seus traços, nunca a pessoa. Não substitui medição instrumental (Praat/forced alignment) nem decisão humana de codificação. Não deve ser usado para vigilância, triagem ou qualquer juízo sobre indivíduos.</p>
+      <p><strong>Limitações conhecidas:</strong> a base é um LLM ouvindo áudio — a discriminação fonética fina é incerta e variável entre execuções. As medições acústicas (F0, espectrograma confiáveis; nPVI de envelope e formantes LPC são estimativas de escala própria, não medidas segmentais validadas). A detecção de variedades raras/L2 e de traços de AAE é a mais sujeita a erro. Atributos perceptuais sensíveis (gênero, idade) são deixados ao codificador humano.</p>
+      <p><strong>Salvaguardas embutidas:</strong> protocolo bottom-up; portão anti-viés contra rótulos de prestígio (GenAm/RP) sem evidência positiva; modo consenso para medir confiabilidade entre execuções; conjunto de aferição com κ (modelo×humano); registro de proveniência (modelo, versão do protocolo, parâmetros) por análise.</p>
+      <p><strong>Verificação humana obrigatória:</strong> toda saída traz base ("Impressão auditiva"), confiança e evidência, e o fluxo prevê segundo codificador e conciliação. Os índices de confiabilidade (aba Calibração) devem acompanhar qualquer publicação.</p>
+    </div>
+  </div>
   <div class="card">
     <h2>Metodologia</h2>
     <div class="docs-section" style="margin-top:1rem;">
@@ -655,6 +693,7 @@ function switchTab(name) {
   if (name === 'history') renderHistory();
   if (name === 'compare') renderCompareSelects();
   if (name === 'calibration') { renderCalibList(); renderBandsPanel(); }
+  if (name === 'docs') updateCitation();
 }
 
 // ── API key ───────────────────────────────────────────────────────────────────
@@ -869,6 +908,7 @@ function showError(msg) {
 }
 
 // ── Variety data ──────────────────────────────────────────────────────────────
+const PROTOCOL_VERSION = '1.0';
 const VLABELS = {
   none:'', american:'inglês americano geral (GenAm)', british:'inglês britânico padrão (RP)',
   australian:'inglês australiano', newzealand:'inglês neozelandês', southafrican:'inglês sul-africano',
@@ -1468,6 +1508,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const cv = document.getElementById('calib-variety');
   if (cv) { cv.innerHTML = varietyOptionsHTML('american'); }
   loadAcousticBands();
+  const cvz = document.getElementById('cite-versao'); if (cvz && !cvz.value) cvz.value = PROTOCOL_VERSION;
+  const cya = document.getElementById('cite-ano'); if (cya && !cya.value) cya.value = String(new Date().getFullYear());
+  const cau = document.getElementById('cite-autor'); if (cau && !cau.value) cau.value = 'MARQUES, F. P.';
+  if (typeof updateCitation === 'function') updateCitation();
 });
 
 // ── Heatmap palette ───────────────────────────────────────────────────────────
@@ -1988,6 +2032,12 @@ async function analyzeSingle(apiKey, file, base64data, batchIdx) {
     durationSec: Math.round(dur || 0),
     acoustics: acousticData ? acousticData.summary : null,
     acousticPrior: !!acousticContext,
+    provenance: captureProvenance({
+      consensusRuns: consensusOn ? consensusK : 1,
+      acousticPrior: !!acousticContext,
+      aaeMode: document.getElementById('chk-aae-coding')?.checked,
+      detailLevel: dl
+    }),
     result: { fase1: r1, fase2: r2, fase2_porFalante: r2List },
     annotation: ''
   };
@@ -3156,6 +3206,87 @@ function exportAAEAll(){
   dl('planilha_aae_todas.csv', aaeSheetCSV(history), 'text/csv');
 }
 
+// ── Reliability statistics (model vs human gold) ──────────────────────────────
+function cohenKappa(pairs){
+  const n=pairs.length; if(!n) return null;
+  const labels=[...new Set(pairs.flatMap(p=>[normVal(p.gold),normVal(p.pred)]))];
+  let po=0; pairs.forEach(p=>{ if(normVal(p.gold)===normVal(p.pred)) po++; }); po/=n;
+  const gc={},pc={}; labels.forEach(l=>{gc[l]=0;pc[l]=0;});
+  pairs.forEach(p=>{ gc[normVal(p.gold)]++; pc[normVal(p.pred)]++; });
+  let pe=0; labels.forEach(l=>{ pe += (gc[l]/n)*(pc[l]/n); });
+  return { kappa: pe<1 ? (po-pe)/(1-pe) : 1, po, pe, n };
+}
+function kappaLabel(k){
+  if(k<0) return 'pobre';
+  if(k<0.2) return 'leve';
+  if(k<0.4) return 'razoável';
+  if(k<0.6) return 'moderada';
+  if(k<0.8) return 'substancial';
+  return 'quase perfeita';
+}
+function binaryPRF1(pairs){
+  let tp=0,fp=0,fn=0,tn=0;
+  pairs.forEach(p=>{ if(p.gold&&p.pred)tp++; else if(!p.gold&&p.pred)fp++; else if(p.gold&&!p.pred)fn++; else tn++; });
+  const prec=tp+fp?tp/(tp+fp):0, rec=tp+fn?tp/(tp+fn):0, f1=prec+rec?2*prec*rec/(prec+rec):0, acc=pairs.length?(tp+tn)/pairs.length:0;
+  return {tp,fp,fn,tn,prec,rec,f1,acc,n:pairs.length};
+}
+
+// ── ABNT citation generator ───────────────────────────────────────────────────
+function abntReference(o){
+  const meses=['jan.','fev.','mar.','abr.','maio','jun.','jul.','ago.','set.','out.','nov.','dez.'];
+  const d=o.acesso||new Date();
+  const acc=`${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+  const autor=(o.autor&&o.autor.trim())?o.autor.trim():'SOBRENOME, Nome';
+  const url=(o.url&&o.url.trim())?o.url.trim():'[URL de acesso]';
+  return `${autor}. <strong>${e(o.titulo||'Dialectica')}</strong>: ${e(o.sub||'análise fonética e sociolinguística assistida por IA')}. Versão ${e(o.versao||PROTOCOL_VERSION)}. [S. l.], ${e(String(o.ano||new Date().getFullYear()))}. Software. Disponível em: ${e(url)}. Acesso em: ${acc}.`;
+}
+function updateCitation(){
+  const out=document.getElementById('cite-output'); if(!out) return;
+  out.innerHTML=abntReference({
+    autor: document.getElementById('cite-autor')?.value,
+    ano: document.getElementById('cite-ano')?.value,
+    versao: document.getElementById('cite-versao')?.value,
+    url: document.getElementById('cite-url')?.value,
+    acesso: new Date()
+  });
+}
+function copyCitation(){
+  const out=document.getElementById('cite-output'); if(!out) return;
+  const tmp=out.innerText || out.textContent;
+  navigator.clipboard?.writeText(tmp).then(()=>{ const b=document.getElementById('cite-copy-btn'); if(b){ const t=b.textContent; b.textContent='copiado ✓'; setTimeout(()=>b.textContent=t,1500); } });
+}
+
+// ── Provenance / methods log ──────────────────────────────────────────────────
+function captureProvenance(opts){
+  return {
+    protocolVersion: PROTOCOL_VERSION,
+    model: (typeof document!=='undefined' && document.getElementById('gemini-model')?.value) || '',
+    thinkingLevel: (typeof document!=='undefined' && document.getElementById('thinking-level')?.value) || '',
+    temperaturaFase: 0.3,
+    execucoesConsenso: opts.consensusRuns || 1,
+    acusticaPrevia: !!opts.acousticPrior,
+    modoAAE: !!opts.aaeMode,
+    detalheIPA: opts.detailLevel || '',
+    data: new Date().toISOString()
+  };
+}
+function exportMethodsLog(){
+  if(!history.length) return;
+  const log = {
+    ferramenta: 'Dialectica',
+    protocolo_versao: PROTOCOL_VERSION,
+    gerado_em: new Date().toISOString(),
+    n_analises: history.length,
+    analises: history.map(en=>({
+      id: en.id, livro: en.metadata?.book||'', licao: en.metadata?.lesson||'',
+      arquivo: en.metadata?.source_file||'',
+      variedade_detectada: en.result?.fase1?.variedade_detectada||'',
+      proveniencia: en.provenance || null
+    }))
+  };
+  dl('log_de_metodos_dialectica.json', JSON.stringify(log, null, 2), 'application/json');
+}
+
 function e(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -3565,7 +3696,7 @@ async function calibAddClip(){
   if(!calibPendingFile) return;
   const expKey=document.getElementById('calib-variety').value;
   const expSpk=parseInt(document.getElementById('calib-speakers').value)||1;
-  const clip={ id:Date.now()+Math.floor(Math.random()*1000), name:calibPendingFile.name, blob:calibPendingFile, type:calibPendingFile.type, expectedVarietyKey:expKey, expectedSpeakers:expSpk, addedAt:new Date().toLocaleString('pt-BR') };
+  const clip={ id:Date.now()+Math.floor(Math.random()*1000), name:calibPendingFile.name, blob:calibPendingFile, type:calibPendingFile.type, expectedVarietyKey:expKey, expectedSpeakers:expSpk, expectedAAE:(document.getElementById('calib-aae')?.value||''), addedAt:new Date().toLocaleString('pt-BR') };
   try{ await idbPut(clip); }catch(err){ showError('Falha ao salvar clipe: '+err.message); return; }
   calibPendingFile=null; document.getElementById('calib-file').value=''; document.getElementById('calib-fname').textContent='nenhum arquivo'; document.getElementById('calib-add-btn').disabled=true;
   renderCalibList();
@@ -3598,6 +3729,8 @@ async function calibRunAll(){
   const summaryEl=document.getElementById('calib-summary'); summaryEl.innerHTML='';
   let okVar=0, okSpk=0, done=0, stabilitySum=0, stabilityN=0;
   const acSamples=[];
+  const varietyPairs=[], aaePairs=[];
+  const aaeOn=document.getElementById('chk-aae-coding')?.checked;
   for(const c of clips){
     const resEl=document.getElementById('calib-res-'+c.id); if(resEl) resEl.textContent='⟳ analisando...';
     const row=document.getElementById('calib-row-'+c.id); if(row) row.className='bq-item bq-active';
@@ -3606,14 +3739,13 @@ async function calibRunAll(){
       const b64=await fileToBase64(file);
       const dur=await fileDuration(file).catch(()=>0);
       const segments=dur>90? await segmentAudio(file): null;
-      // Measure this clip's acoustics and pair with its KNOWN categorical class → training sample for bands.
       try{
         const buf=await decodeAudioFile(file);
         const ac=computeAcoustics(buf);
         const exp=VACOUSTIC[c.expectedVarietyKey];
         if(exp) acSamples.push({ rhythmClass:exp.rhythm, vowelClass:exp.vowel, npvi:ac.summary.npvi_env, disp:ac.summary.vowel_dispersion });
       }catch{}
-      let predKey, predSpk, stability=null;
+      let predKey, predSpk, stability=null, repR1=null;
       if(useConsensus){
         const runs=[];
         for(let ri=0; ri<kRuns; ri++){
@@ -3626,14 +3758,21 @@ async function calibRunAll(){
         predSpk=parseInt(cons.falantes.modalValue)||1;
         stability=cons.variedade.agreement;
         stabilitySum+=stability; stabilityN++;
+        repR1 = runs.find(r=>normVal(r.variedade_key)===predKey) || runs[0];
       } else {
         const r1=await acquirePhase1(apiKey, file, b64, segments, dl, useIU, '');
         predKey=r1.variedade_key||'';
         predSpk=Array.isArray(r1.falantes)&&r1.falantes.length>1? r1.falantes.length : 1;
+        repR1=r1;
       }
       const vOk=normVal(predKey)===normVal(c.expectedVarietyKey);
       const sOk=predSpk===c.expectedSpeakers;
       if(vOk) okVar++; if(sOk) okSpk++;
+      varietyPairs.push({ gold:c.expectedVarietyKey, pred:predKey });
+      // AAE presence agreement (only when both gold label and AAE detection are available)
+      if(aaeOn && (c.expectedAAE==='sim'||c.expectedAAE==='nao')){
+        aaePairs.push({ gold:c.expectedAAE==='sim', pred:/sim/i.test(repR1?.aae?.presente||'') });
+      }
       const stabTxt = stability!=null ? ` · <span style="color:${stability>=0.8?'var(--ok)':stability>=0.5?'var(--warn)':'var(--err)'};" title="concordância entre ${kRuns} execuções">estab. ${Math.round(stability*100)}%</span>` : '';
       if(resEl) resEl.innerHTML=`<span style="color:${vOk?'var(--ok)':'var(--err)'};">${vOk?'✓':'✗'} ${e(VLABELS[predKey]||predKey||'—')}</span> · <span style="color:${sOk?'var(--ok)':'var(--err)'};">${predSpk} fal.</span>${stabTxt}`;
       if(row) row.className='bq-item '+(vOk?'bq-done':'bq-error');
@@ -3645,7 +3784,6 @@ async function calibRunAll(){
     if(done<clips.length) await delay(4000);
   }
   btn.disabled=false; btn.textContent='Rodar aferição';
-  // Learn empirical acoustic bands from this run's measurements + known labels.
   if(acSamples.length){
     const bands=computeAcousticBands(acSamples);
     try{ await idbMetaPut('acousticBands', bands); }catch{}
@@ -3658,6 +3796,42 @@ async function calibRunAll(){
     <div class="sec-title" style="margin-bottom:.3rem;">acurácia da aferição${useConsensus?` (consenso de ${kRuns}×)`:''}</div>
     <div style="font-size:1.1rem;">variedade: <strong style="color:${accV>=80?'var(--ok)':accV>=50?'var(--warn)':'var(--err)'};">${accV}%</strong> (${okVar}/${clips.length}) · nº falantes: <strong>${accS}%</strong> (${okSpk}/${clips.length})${meanStab!=null?` · estabilidade média: <strong>${meanStab}%</strong>`:''}</div>
     <div style="font-size:.82rem;color:var(--muted);margin-top:.4rem;">Rode após mudar prompts ou modelo para detectar regressões. ${useConsensus?'Acurácia mede acerto vs. gabarito; estabilidade mede a concordância do modelo consigo mesmo entre execuções — baixa estabilidade indica detecção frágil mesmo quando o acerto sai correto.':'Ative "consenso" para medir também a estabilidade de cada resposta entre execuções.'}</div>
+  </div>`;
+  renderReliabilityPanel(varietyPairs, aaePairs);
+}
+
+function renderReliabilityPanel(varietyPairs, aaePairs){
+  const host=document.getElementById('calib-reliability'); if(!host) return;
+  let h='';
+  const vk=cohenKappa(varietyPairs||[]);
+  if(vk){
+    const col = vk.kappa>=0.6?'var(--ok)':vk.kappa>=0.4?'var(--warn)':'var(--err)';
+    // confusion: list mismatches gold→pred
+    const mism={};
+    varietyPairs.forEach(p=>{ if(normVal(p.gold)!==normVal(p.pred)){ const k=`${VLABELS[p.gold]||p.gold} → ${VLABELS[p.pred]||p.pred||'—'}`; mism[k]=(mism[k]||0)+1; } });
+    const mismList=Object.entries(mism).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${e(k)} (${n}×)`).join(' · ');
+    h += `<div style="padding:.7rem 1rem;border-radius:8px;background:var(--surface);border:1px solid var(--border);margin-bottom:.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;flex-wrap:wrap;">
+        <span style="font-family:monospace;font-size:.78rem;color:var(--muted);text-transform:uppercase;">concordância modelo×humano (variedade)</span>
+        <span style="font-size:1rem;color:${col};">κ = ${vk.kappa.toFixed(2)} <span style="font-size:.8rem;">(${kappaLabel(vk.kappa)})</span></span>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);font-family:monospace;margin-top:.25rem;">Cohen's kappa · concordância observada ${Math.round(vk.po*100)}% · esperada ao acaso ${Math.round(vk.pe*100)}% · n=${vk.n}</div>
+      ${mismList?`<div style="font-size:.78rem;color:var(--muted);margin-top:.35rem;"><strong style="color:var(--text);">confusões:</strong> ${mismList}</div>`:'<div style="font-size:.78rem;color:var(--ok);margin-top:.35rem;">sem discordâncias</div>'}
+    </div>`;
+  }
+  if(aaePairs && aaePairs.length){
+    const m=binaryPRF1(aaePairs);
+    h += `<div style="padding:.7rem 1rem;border-radius:8px;background:var(--surface);border:1px solid var(--border);margin-bottom:.5rem;">
+      <div style="font-family:monospace;font-size:.78rem;color:var(--muted);text-transform:uppercase;margin-bottom:.3rem;">detecção de AAE — modelo×humano (presença)</div>
+      <div style="font-size:.95rem;">precisão <strong>${Math.round(m.prec*100)}%</strong> · recall <strong>${Math.round(m.rec*100)}%</strong> · F1 <strong>${Math.round(m.f1*100)}%</strong></div>
+      <div style="font-size:.78rem;color:var(--muted);font-family:monospace;margin-top:.25rem;">VP ${m.tp} · FP ${m.fp} · FN ${m.fn} · VN ${m.tn} · n=${m.n}</div>
+    </div>`;
+  }
+  if(!h){ host.innerHTML=''; return; }
+  host.innerHTML = `<div style="padding:1rem 1.25rem;border-radius:9px;background:var(--p2bg);border:1px solid var(--p2bd);margin-top:1rem;">
+    <div class="sec-title" style="margin-bottom:.5rem;">confiabilidade modelo × humano</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5;">A variedade esperada de cada clipe é o gabarito humano; estes índices medem o quanto o modelo concorda com ele — a evidência de validade para publicação. κ&lt;0,4 = fraca; 0,4–0,6 moderada; 0,6–0,8 substancial; &gt;0,8 quase perfeita (Landis &amp; Koch).</div>
+    ${h}
   </div>`;
 }
 
